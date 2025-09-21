@@ -7,12 +7,14 @@
 
   <!-- Tailwind CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Tailwind runtime config (colors, fonts, etc.) -->
   <script src="./tailwind-config.js"></script>
 
   <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Leaflet map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
   <!-- App styles -->
   <link rel="stylesheet" href="./styles.css">
@@ -53,18 +55,28 @@
             <!-- Suggestions panel -->
             <div id="suggestions"
               class="hidden absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden">
-              <!-- Filled by JS -->
               <div class="p-3 text-sm text-muted-foreground">Start typing to search…</div>
             </div>
           </div>
         </div>
 
-        <!-- Navigation -->
+        <!-- Navigation + Toggles -->
         <nav class="hidden md:flex items-center space-x-6">
           <a href="#current" class="text-primary hover:text-secondary transition-colors font-medium">Current</a>
           <a href="#forecast" class="text-slate-600 hover:text-secondary transition-colors">Forecast</a>
-          <a href="#radar" class="text-slate-600 hover:text-secondary transition-colors">Radar</a>
+          <a href="#radar" class="text-slate-600 hover:text-secondary transition-colors">Map</a>
           <a href="#alerts" class="text-slate-600 hover:text-secondary transition-colors">Alerts</a>
+
+          <!-- Unit toggle -->
+          <div class="flex items-center gap-2 ml-4">
+            <button id="unit-c" class="px-2 py-1 rounded border text-sm">°C</button>
+            <button id="unit-f" class="px-2 py-1 rounded border text-sm">°F</button>
+          </div>
+
+          <!-- Theme toggle -->
+          <button id="theme-toggle" class="ml-2 p-2 rounded-lg hover:bg-gray-100" title="Toggle theme" aria-label="Toggle theme">
+            <i class="fas fa-moon text-gray-600"></i>
+          </button>
         </nav>
 
         <!-- Mobile Menu Button -->
@@ -74,6 +86,17 @@
       </div>
     </div>
   </header>
+
+  <!-- Favorites -->
+  <div class="bg-muted/60 border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 flex flex-wrap items-center gap-2">
+      <span class="text-xs text-muted-foreground mr-2">Favorites:</span>
+      <div id="fav-bar" class="flex flex-wrap gap-2"></div>
+      <button id="fav-add" class="ml-auto text-xs px-2 py-1 border rounded hover:bg-white">
+        <i class="fas fa-plus mr-1"></i> Add current
+      </button>
+    </div>
+  </div>
 
   <!-- Main Content -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -208,80 +231,23 @@
       </div>
     </section>
 
-    <!-- Additional Features -->
-    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Sun & Moon -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <h3 class="text-lg font-semibold text-card-foreground mb-4 flex items-center">
-          <i class="fas fa-sun text-secondary mr-2"></i>
-          Sun & Moon
-        </h3>
-        <div class="space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-muted-foreground">Sunrise</span>
-            <span id="sunrise" class="font-semibold">—</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-muted-foreground">Sunset</span>
-            <span id="sunset" class="font-semibold">—</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-muted-foreground">Moon Phase</span>
-            <span id="moon-phase" class="font-semibold">—</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Precipitation -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <h3 class="text-lg font-semibold text-card-foreground mb-4 flex items-center">
-          <i class="fas fa-cloud-rain text-secondary mr-2"></i>
-          Precipitation
-        </h3>
-        <div class="space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-muted-foreground">Today</span>
-            <span id="precip-today" class="font-semibold">—</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-muted-foreground">This Week</span>
-            <span id="precip-week" class="font-semibold">—</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-muted-foreground">This Month</span>
-            <span id="precip-month" class="font-semibold">Unavailable</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Wind Details -->
-      <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
-        <h3 class="text-lg font-semibold text-card-foreground mb-4 flex items-center">
-          <i class="fas fa-wind text-secondary mr-2"></i>
-          Wind Details
-        </h3>
-        <div class="space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-muted-foreground">Speed</span>
-            <span id="wind-speed" class="font-semibold">—</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-muted-foreground">Direction</span>
-            <span id="wind-dir" class="font-semibold">—</span>
-          </div>
-          <div class="flex items-center justify-between">
-            <span class="text-muted-foreground">Gusts</span>
-            <span id="wind-gust" class="font-semibold">—</span>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- (Optional) Simple Radar placeholder -->
+    <!-- Map + Extras -->
     <section id="radar" class="mt-12">
-      <h2 class="text-2xl font-bold text-primary mb-4">Radar</h2>
-      <div class="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-muted-foreground">
-        Basic map/radar can be added here (Leaflet + tiles). For now, weather data is fully functional.
+      <h2 class="text-2xl font-bold text-primary mb-4">Map</h2>
+      <div id="map" class="rounded-xl border border-gray-200" style="height: 360px;"></div>
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="p-4 rounded-lg border bg-white shadow-sm">
+          <h3 class="font-semibold mb-2 text-card-foreground"><i class="fas fa-shirt mr-2 text-secondary"></i>Outfit Tip</h3>
+          <p id="outfit-tip" class="text-sm text-muted-foreground">—</p>
+        </div>
+        <a id="open-maps" target="_blank" rel="noopener"
+           class="p-4 rounded-lg border bg-white shadow-sm hover:shadow transition flex items-center justify-between">
+          <div>
+            <h3 class="font-semibold text-card-foreground">Open in Maps</h3>
+            <p class="text-sm text-muted-foreground">View this location in your default map app.</p>
+          </div>
+          <i class="fas fa-external-link-alt text-secondary"></i>
+        </a>
       </div>
     </section>
   </main>
@@ -302,7 +268,7 @@
           <ul class="space-y-2 text-sm text-muted-foreground">
             <li><a href="#current" class="hover:text-secondary transition-colors">Current Weather</a></li>
             <li><a href="#forecast" class="hover:text-secondary transition-colors">7-Day Forecast</a></li>
-            <li><a href="#radar" class="hover:text-secondary transition-colors">Weather Radar</a></li>
+            <li><a href="#radar" class="hover:text-secondary transition-colors">Map</a></li>
             <li><a href="#alerts" class="hover:text-secondary transition-colors">Weather Alerts</a></li>
           </ul>
         </div>
@@ -331,7 +297,10 @@
     </div>
   </footer>
 
-  <!-- App logic (keep at end so DOM exists) -->
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- App logic -->
   <script src="./app.js"></script>
 </body>
 </html>

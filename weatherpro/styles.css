@@ -1,19 +1,44 @@
-/* Global tweaks that don't belong in Tailwind classes */
-:root {
-  color-scheme: light;
+/* Global */
+:root { color-scheme: light; }
+html, body { height: 100%; }
+body { font-family: Inter, system-ui, sans-serif; }
+
+/* Dark theme */
+.dark { color-scheme: dark; }
+.dark body { background: #0b1220; color: #cdd5e1; }
+.dark .bg-white { background-color: #0f172a !important; }
+.dark .text-card-foreground { color: #dbeafe !important; }
+.dark .border-gray-100, .dark .border-gray-200 { border-color: #1f2937 !important; }
+.dark .bg-gray-50 { background-color: #0b1220 !important; }
+
+/* Favorite chips */
+.fav-chip { 
+  display: inline-flex; align-items: center; gap: .4rem;
+  padding: .25rem .5rem; border-radius: 999px; border: 1px solid #e5e7eb;
+  cursor: pointer; font-size: .75rem;
+}
+.fav-chip:hover { background: #fff; }
+.fav-chip .remove { color: #9ca3af; }
+.fav-chip .remove:hover { color: #ef4444; }
+
+/* Condition backgrounds */
+.sky-clear { background: linear-gradient(180deg,#ecfeff 0%,#ffffff 100%); }
+.sky-cloudy { background: linear-gradient(180deg,#f1f5f9 0%,#ffffff 100%); }
+.sky-rain  { background: linear-gradient(180deg,#e0f2fe 0%,#ffffff 100%); }
+.sky-night { background: linear-gradient(180deg,#0b1220 0%,#111827 100%); }
+
+/* Rain/Snow particles */
+.particles {
+  position: fixed; inset: 0; pointer-events: none; opacity: .15;
+  background-image: radial-gradient(#0ea5e9 1px, transparent 1px);
+  background-size: 24px 24px; animation: drift 20s linear infinite;
+}
+@keyframes drift {
+  from { background-position: 0 0; }
+  to   { background-position: -200px 200px; }
 }
 
-html, body {
-  height: 100%;
-}
-
-body {
-  font-family: Inter, system-ui, sans-serif;
-}
-
-/* Reduce motion for users who prefer it */
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .animate-spin {
-    animation: none !important;
-  }
+  .animate-spin { animation: none !important; }
 }
