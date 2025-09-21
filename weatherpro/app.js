@@ -448,6 +448,192 @@ el('search-input').addEventListener('keypress', (e) => {
   }
 });
 
+/* ====== SEARCH SUGGESTIONS CONFIG ====== */
+const SUGGEST_LIMIT = 6;
+const GEO_SUG_URL = (q) =>
+  `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(q)}&limit=${SUGGEST_LIMIT}&appid=${API_KEY}`;
+
+/* Simple debounce */
+function debounce(fn, ms = 250) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), ms);
+  };
+}
+
+/* ====== SEARCH STATE ====== */
+const searchInput = el('search-input');
+const searchToggleBtn = el('search-toggle');
+const suggestionsPanel = el('suggestions');
+let suggestionsOpen = false;
+let currentSuggestions = [];
+let recentPlaces = JSON.parse(localStorage.getItem('wp_recent') || '[]').slice(0, 5);
+
+function saveRecent(place) {
+  // place: {name, state, country, lat, lon, full}
+  recentPlaces = [
+    place,
+    ...recentPlaces.filter((p) => p.full !== place.full),
+  ].slice(0, 5);
+  localStorage.setItem('wp_recent', JSON.stringify(recentPlaces));
+}
+
+function renderDefaultSuggestions() {
+  const items = [];
+
+  // Current location action
+  items.push(`
+    <button data-action="use-current"
+      class="w-full text-left px-4 py-2 hover:bg-gray-50 flex items-center gap-2">
+      <i class="fas fa-location-arrow text-secondary"></i>
+      Use current location
+    </button>`);
+
+  if (recentPlaces.length) {
+    items.push(`<div class="px-4 pt-2 pb-1 text-xs uppercase tracking-wide text-gray-500">Recent</div>`);
+    recentPlaces.forEach((p, idx) => {
+      items.push(`
+        <button data-idx="${idx}" data-type="recent"
+          class="w-full text-left px-4 py-2 hover:bg-gray-50">
+          ${p.full}
+        </button>`);
+    });
+  } else {
+    items.push(`<div class="px-4 py-2 text-sm text-muted-foreground">No recent searches</div>`);
+  }
+
+  suggestionsPanel.innerHTML = items.join('');
+}
+
+function renderSuggestions(list) {
+  if (!list?.length) {
+    suggestionsPanel.innerHTML = `<div class="p-3 text-sm text-muted-foreground">No results. Try another query.</div>`;
+    return;
+  }
+  currentSuggestions = list.map((g) => ({
+    name: g.name,
+    state: g.state,
+    country: g.country,
+    lat: g.lat,
+    lon: g.lon,
+    full: `${g.name}${g.state ? ', ' + g.state : ''}${g.country ? ', ' + g.country : ''}`,
+  }));
+
+  const items = currentSuggestions.map((p, i) => `
+    <button data-idx="${i}" data-type="geo"
+      class="w-full text-left px-4 py-2 hover:bg-gray-50">
+      <div class="font-medium">${p.name}</div>
+      <div class="text-xs text-muted-foreground">
+        ${[p.state, p.country].filter(Boolean).join(' • ')}
+      </div>
+    </button>
+  `);
+  suggestionsPanel.innerHTML = items.join('');
+}
+
+
+function openSuggestions() {
+  renderDefaultSuggestions();
+  suggestionsPanel.classList.remove('hidden');
+  searchInput.setAttribute('aria-expanded', 'true');
+  suggestionsOpen = true;
+}
+
+function closeSuggestions() {
+  suggestionsPanel.classList.add('hidden');
+  searchInput.setAttribute('aria-expanded', 'false');
+  suggestionsOpen = false;
+}
+
+// Toggle click
+searchToggleBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  suggestionsOpen ? closeSuggestions() : openSuggestions();
+});
+
+// Input typing -> fetch suggestions (debounced)
+const doSuggest = debounce(async (q) => {
+  if (!q || q.length < 2) {
+    renderDefaultSuggestions();
+    return;
+  }
+  try {
+    const res = await getJSON(GEO_SUG_URL(q));
+    renderSuggestions(res);
+  } catch {
+    suggestionsPanel.innerHTML = `<div class="p-3 text-sm text-muted-foreground">Could not load suggestions.</div>`;
+  }
+}, 250);
+
+searchInput.addEventListener('input', (e) => {
+  if (!suggestionsOpen) openSuggestions();
+  doSuggest(e.target.value.trim());
+});
+
+// Enter to search first suggestion or raw text
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
+    const q = e.currentTarget.value.trim();
+    if (!q) return;
+    // Prefer first suggestion if present
+    if (currentSuggestions.length) {
+      selectPlace(currentSuggestions[0]);
+    } else {
+      loadWeatherByCity(q);
+    }
+    closeSuggestions();
+  }
+});
+
+// Click inside suggestions
+suggestionsPanel.addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  const type = btn.dataset.type;
+  const idx = Number(btn.dataset.idx);
+
+  if (btn.dataset.action === 'use-current') {
+    // Use current geolocation
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => loadWeatherByCoords(pos.coords.latitude, pos.coords.longitude),
+        () => loadWeatherByCity(lastQuery),
+        { enableHighAccuracy: true, timeout: 8000, maximumAge: 300000 }
+      );
+    } else {
+      loadWeatherByCity(lastQuery);
+    }
+    closeSuggestions();
+    return;
+  }
+
+  if (type === 'geo' && currentSuggestions[idx]) {
+    selectPlace(currentSuggestions[idx]);
+  } else if (type === 'recent' && recentPlaces[idx]) {
+    selectPlace(recentPlaces[idx]);
+  }
+  closeSuggestions();
+});
+
+// Click outside closes panel
+document.addEventListener('click', (e) => {
+  if (!suggestionsOpen) return;
+  if (!document.getElementById('searchbox').contains(e.target)) {
+    closeSuggestions();
+  }
+});
+
+function selectPlace(p) {
+  // Update the input text
+  searchInput.value = p.full;
+  // Save to recents
+  saveRecent(p);
+  // Render directly via coords (more precise than text)
+  loadAndRender(p.lat, p.lon, p);
+}
+
+
 el('refresh-btn').addEventListener('click', () => {
   if (lastCoords) loadWeatherByCoords(lastCoords.lat, lastCoords.lon);
   else loadWeatherByCity(lastQuery);
