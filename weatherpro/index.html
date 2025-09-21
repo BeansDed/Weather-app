@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WeatherPro - Your Complete Weather Companion</title>
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind runtime config (colors, fonts, etc.) -->
+  <script src="./tailwind-config.js"></script>
+
+  <!-- Fonts & Icons -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body class="bg-white text-slate-600 font-sans">
+  <!-- Header -->
+  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex items-center justify-between h-16">
+        <!-- Logo -->
+        <div class="flex items-center space-x-2">
+          <i class="fas fa-cloud-sun text-2xl text-secondary"></i>
+          <h1 class="text-xl font-bold text-primary">WeatherPro</h1>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="flex-1 max-w-md mx-8">
+          <div class="relative">
+            <input id="search-input" type="text" placeholder="Search for a city..."
+              class="w-full px-4 py-2 pl-10 pr-4 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-secondary focus:border-transparent bg-gray-50">
+            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
+          </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="hidden md:flex items-center space-x-6">
+          <a href="#current" class="text-primary hover:text-secondary transition-colors font-medium">Current</a>
+          <a href="#forecast" class="text-slate-600 hover:text-secondary transition-colors">Forecast</a>
+          <a href="#radar" class="text-slate-600 hover:text-secondary transition-colors">Radar</a>
+          <a href="#alerts" class="text-slate-600 hover:text-secondary transition-colors">Alerts</a>
+        </nav>
+
+        <!-- Mobile Menu Button -->
+        <button class="md:hidden p-2 rounded-lg hover:bg-gray-100" aria-label="Open Menu">
+          <i class="fas fa-bars text-gray-600"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Current Weather Section -->
+    <section id="current" class="mb-12">
+      <div class="bg-gradient-to-br from-card to-white rounded-2xl shadow-lg p-8 border border-gray-100">
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h2 class="text-2xl font-bold text-card-foreground mb-2">Current Weather</h2>
+            <div class="flex items-center text-muted-foreground">
+              <i class="fas fa-map-marker-alt mr-2"></i>
+              <span id="location-name">—</span>
+              <span class="mx-2">•</span>
+              <span id="current-time">—</span>
+            </div>
+          </div>
+          <button id="refresh-btn" class="p-2 rounded-lg hover:bg-white/50 transition-colors" aria-label="Refresh">
+            <i id="refresh-icon" class="fas fa-sync-alt text-secondary"></i>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <!-- Temperature Display -->
+          <div class="text-center lg:text-left">
+            <div class="flex items-center justify-center lg:justify-start mb-4">
+              <i id="current-icon" class="fas fa-sun text-6xl text-yellow-400 mr-4"></i>
+              <div>
+                <div id="current-temp" class="text-6xl font-light text-card-foreground">—°</div>
+                <div id="feels-like" class="text-lg text-muted-foreground">Feels like —°</div>
+              </div>
+            </div>
+            <div id="current-desc" class="text-xl font-medium text-card-foreground mb-2">—</div>
+            <div id="current-brief" class="text-muted-foreground">—</div>
+          </div>
+
+          <!-- Weather Details Grid -->
+          <div class="grid grid-cols-2 gap-4">
+            <div class="bg-white/50 rounded-lg p-4 text-center">
+              <i class="fas fa-eye text-secondary text-xl mb-2"></i>
+              <div class="text-sm text-muted-foreground">Visibility</div>
+              <div id="visibility" class="text-lg font-semibold text-card-foreground">—</div>
+            </div>
+            <div class="bg-white/50 rounded-lg p-4 text-center">
+              <i class="fas fa-tint text-secondary text-xl mb-2"></i>
+              <div class="text-sm text-muted-foreground">Humidity</div>
+              <div id="humidity" class="text-lg font-semibold text-card-foreground">—</div>
+            </div>
+            <div class="bg-white/50 rounded-lg p-4 text-center">
+              <i class="fas fa-wind text-secondary text-xl mb-2"></i>
+              <div class="text-sm text-muted-foreground">Wind</div>
+              <div id="wind" class="text-lg font-semibold text-card-foreground">—</div>
+            </div>
+            <div class="bg-white/50 rounded-lg p-4 text-center">
+              <i class="fas fa-thermometer-half text-secondary text-xl mb-2"></i>
+              <div class="text-sm text-muted-foreground">Pressure</div>
+              <div id="pressure" class="text-lg font-semibold text-card-foreground">—</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7-Day Forecast -->
+    <section id="forecast" class="mb-12">
+      <h2 class="text-2xl font-bold text-primary mb-6">7-Day Forecast</h2>
+      <div id="forecast-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-4"></div>
+    </section>
+
+    <!-- Detailed Information -->
+    <section class="mb-12">
+      <h2 class="text-2xl font-bold text-primary mb-6">Detailed Information</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Hourly Forecast -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+          <h3 class="text-lg font-semibold text-card-foreground mb-4 flex items-center">
+            <i class="fas fa-clock text-secondary mr-2"></i>
+            Hourly Forecast
+          </h3>
+          <div id="hourly-list" class="space-y-3"></div>
+        </div>
+
+        <!-- Air Quality & UV Index -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+          <h3 class="text-lg font-semibold text-card-foreground mb-4 flex items-center">
+            <i class="fas fa-leaf text-secondary mr-2"></i>
+            Air Quality & UV Index
+          </h3>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="text-muted-foreground">Air Quality Index</span>
+              <div class="flex items-center">
+                <div id="aqi-dot" class="w-3 h-3 bg-gray-400 rounded-full mr-2"></div>
+                <span id="aqi-text" class="font-semibold text-gray-700">—</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-muted-foreground">UV Index</span>
+              <div class="flex items-center">
+                <div id="uv-dot" class="w-3 h-3 bg-gray-400 rounded-full mr-2"></div>
+                <span id="uv-text" class="font-semibold text-gray-700">—</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between">
+              <span class="text-muted-foreground">Pollen Count</span>
+              <div class="flex items-center">
+                <div class="w-3 h-3 bg-yellow-400 rounded-full mr-2"></div>
+                <span class="font-semibold text-yellow-600">Unavailable</span>
+              </div>
+            </div>
+            <div class="mt-4 p-3 bg-muted rounded-lg">
+              <p id="air-advice" class="text-sm text-muted-foreground">
+                <i class="fas fa-info-circle text-secondary mr-1"></i>
+                —
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Weather Alerts -->
+    <section id="alerts" class="mb-12">
+      <h2 class="text-2xl font-bold text-primary mb-6">Weather Alerts</h2>
+      <div id="alerts-box" class="bg-green-50 border border-green-200 rounded-lg p-4">
+        <div class="flex items-center">
+          <i class="fas fa-check-circle text-green-500 text-xl mr-3"></i>
+          <div>
+            <h3 class="font-semibold text-green-800">No Active Alerts</h3>
+            <p class="text-green-700 text-sm">There are currently no weather alerts for your area.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Additional Features -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Sun & Moon -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-semibold text-card-foreground mb-4 flex items-center">
+          <i class="fas fa-sun text-secondary mr-2"></i>
+          Sun & Moon
+        </h3>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-muted-foreground">Sunrise</span>
+            <span id="sunrise" class="font-semibold">—</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted-foreground">Sunset</span>
+            <span id="sunset" class="font-semibold">—</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted-foreground">Moon Phase</span>
+            <span id="moon-phase" class="font-semibold">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Precipitation -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-semibold text-card-foreground mb-4 flex items-center">
+          <i class="fas fa-cloud-rain text-secondary mr-2"></i>
+          Precipitation
+        </h3>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-muted-foreground">Today</span>
+            <span id="precip-today" class="font-semibold">—</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted-foreground">This Week</span>
+            <span id="precip-week" class="font-semibold">—</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted-foreground">This Month</span>
+            <span id="precip-month" class="font-semibold">Unavailable</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Wind Details -->
+      <div class="bg-white rounded-lg shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-semibold text-card-foreground mb-4 flex items-center">
+          <i class="fas fa-wind text-secondary mr-2"></i>
+          Wind Details
+        </h3>
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-muted-foreground">Speed</span>
+            <span id="wind-speed" class="font-semibold">—</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted-foreground">Direction</span>
+            <span id="wind-dir" class="font-semibold">—</span>
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-muted-foreground">Gusts</span>
+            <span id="wind-gust" class="font-semibold">—</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- (Optional) Simple Radar placeholder -->
+    <section id="radar" class="mt-12">
+      <h2 class="text-2xl font-bold text-primary mb-4">Radar</h2>
+      <div class="rounded-xl border border-dashed border-gray-300 p-6 text-center text-sm text-muted-foreground">
+        Basic map/radar can be added here (Leaflet + tiles). For now, weather data is fully functional.
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-50 border-t border-gray-200 mt-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <div class="flex items-center space-x-2 mb-4">
+            <i class="fas fa-cloud-sun text-xl text-secondary"></i>
+            <span class="text-lg font-bold text-primary">WeatherPro</span>
+          </div>
+          <p class="text-muted-foreground text-sm">Your complete weather companion providing accurate forecasts and detailed weather information.</p>
+        </div>
+        <div>
+          <h4 class="font-semibold text-card-foreground mb-3">Features</h4>
+          <ul class="space-y-2 text-sm text-muted-foreground">
+            <li><a href="#current" class="hover:text-secondary transition-colors">Current Weather</a></li>
+            <li><a href="#forecast" class="hover:text-secondary transition-colors">7-Day Forecast</a></li>
+            <li><a href="#radar" class="hover:text-secondary transition-colors">Weather Radar</a></li>
+            <li><a href="#alerts" class="hover:text-secondary transition-colors">Weather Alerts</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-semibold text-card-foreground mb-3">Resources</h4>
+          <ul class="space-y-2 text-sm text-muted-foreground">
+            <li><a href="#" class="hover:text-secondary transition-colors">Weather Maps</a></li>
+            <li><a href="#" class="hover:text-secondary transition-colors">Climate Data</a></li>
+            <li><a href="#" class="hover:text-secondary transition-colors">Weather API</a></li>
+            <li><a href="#" class="hover:text-secondary transition-colors">Mobile App</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-semibold text-card-foreground mb-3">Support</h4>
+          <ul class="space-y-2 text-sm text-muted-foreground">
+            <li><a href="#" class="hover:text-secondary transition-colors">Help Center</a></li>
+            <li><a href="#" class="hover:text-secondary transition-colors">Contact Us</a></li>
+            <li><a href="#" class="hover:text-secondary transition-colors">Privacy Policy</a></li>
+            <li><a href="#" class="hover:text-secondary transition-colors">Terms of Service</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-gray-200 mt-8 pt-6 text-center text-sm text-muted-foreground">
+        <p>&copy; 2025 WeatherPro. All rights reserved. Weather data provided by OpenWeather.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- App logic (keep at end so DOM exists) -->
+  <script src="./app.js"></script>
+</body>
+</html>
